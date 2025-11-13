@@ -98,6 +98,7 @@ class ProductController extends Controller
             'qty' => $products->quantity,
             'buying_price' => $products->buying_price,
             // 'date' => $products->date,
+            'date' => now()->toDateString(),
             'business_id' => Auth::user()->business_id,
             ]);
 
