@@ -74,7 +74,7 @@ class ProductcategoryController extends Controller
         if($request->hasfile('image')){
             $file = $request->file('image');
             $sizeInBytes = $file->getSize();
-            if ($sizeInBytes > 102400) { // Check if size is greater than 100KB (102400 bytes)
+            if ($sizeInBytes > 104857600) { // Check if size is greater than 100MB (104857600 bytes)
                 return redirect('/productcategory')->with('error', "Image too big");
             }
 
