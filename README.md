@@ -1,18 +1,3 @@
-<<<<<<< HEAD
-# Business-POS
-=======
-
-![Inovate](post.PNG)
-
-## About Posprime
-
-It is a web application software designed to manage profits and losses in a business.
-
-- Staff module.
-- Product module.
-- Barcode module.
-- Supplier module.
-- Stock module.
 # Business-POS / Posprime
 
 ![Inovate](post.PNG)
