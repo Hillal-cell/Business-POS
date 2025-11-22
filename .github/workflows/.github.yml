@@ -10,11 +10,11 @@ on:
       - main
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/results-management
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/business-poss
   VERSION_TAG: v1.${{ github.run_number }}
-  POSTGRES_DB: testing
-  POSTGRES_USER: laravel
-  POSTGRES_PASSWORD: laravel
+  MYSQL_DB: testing
+  MYSQL_USER: laravel
+  MYSQL_PASSWORD: laravel
 
 jobs:
   build:
@@ -63,13 +63,13 @@ jobs:
         run: |
           docker rm -f test-db test-app 2>/dev/null || true
 
-      - name: Start Postgres test DB
+      - name: Start Mysql test DB
         run: |
           docker run -d --name test-db \
-            -e POSTGRES_USER=${POSTGRES_USER} \
-            -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
-            -e POSTGRES_DB=${POSTGRES_DB} \
-            postgres:14
+            -e MYSQL_USER=${MYSQL_USER} \
+            -e MYSQL_PASSWORD=${MYSQL_PASSWORD} \
+            -e MYSQL_DB=${MYSQL_DB} \
+            mysql:5.7
 
       - name: Wait for DB
         run: sleep 15
@@ -82,12 +82,12 @@ jobs:
       - name: Run app container
         run: |
           docker run -d --name test-app --link test-db:db \
-            -e DB_CONNECTION=pgsql \
+            -e DB_CONNECTION=mysql \
             -e DB_HOST=db \
             -e DB_PORT=5432 \
-            -e DB_DATABASE=${POSTGRES_DB} \
-            -e DB_USERNAME=${POSTGRES_USER} \
-            -e DB_PASSWORD=${POSTGRES_PASSWORD} \
+            -e DB_DATABASE=${MYSQL_DB} \
+            -e DB_USERNAME=${MYSQL_USER} \
+            -e DB_PASSWORD=${MYSQL_PASSWORD} \
             ${IMAGE_NAME}:latest
 
       - name: Run Laravel tests
@@ -131,7 +131,7 @@ jobs:
             set -e
             cd "$DEPLOY_PATH"
 
-            git fetch https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cranecloud.io/${CI_PROJECT_PATH}.git develop:remotes/origin/develop || true
+            git fetch fetch "${GITHUB_REPOSITORY_URL}" develop:remotes/origin/develop || true
             git checkout develop || true
             git reset --hard origin/develop || true
 
@@ -140,26 +140,26 @@ jobs:
             export ENVIRONMENT=staging
             export APP_PORT=${STAGING_APP_PORT}
             export DB_PORT=5445
-            export POSTGRES_USER=laravel_staging
-            export POSTGRES_PASSWORD=laravel_staging
-            export POSTGRES_DB=results_staging
+            export MYSQL_USER=laravel_staging
+            export MYSQL_PASSWORD=laravel_staging
+            export MYSQL_DB=business_staging
 
             echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-            docker pull ${DOCKER_USERNAME}/results-management:latest || true
+            docker pull ${DOCKER_USERNAME}/business-poss:latest || true
 
-            docker stop results-app-staging results-db-staging results-staging_app_1 results-staging_db_1 results-management-app results-management-db 2>/dev/null || true
-            docker rm results-app-staging results-db-staging results-staging_app_1 results-staging_db_1 results-management-app results-management-db 2>/dev/null || true
+            docker stop businnes-poss-staging business-db-staging business-staging_app_1 business-staging_db_1 business-poss-app business-poss-db 2>/dev/null || true
+            docker rm businnes-poss-staging business-db-staging business-staging_app_1 business-staging_db_1 business-poss-app business-poss-db 2>/dev/null || true
 
-            docker-compose -p results-staging up -d
+            docker-compose -p business-staging up -d
 
             sleep 20
 
-            docker-compose -p results-staging exec -T app php artisan key:generate --force || true
-            docker-compose -p results-staging exec -T app php artisan storage:link || true
-            docker-compose -p results-staging exec -T app php artisan migrate --force || true
-            docker-compose -p results-staging exec -T app php artisan config:clear || true
-            docker-compose -p results-staging exec -T app php artisan cache:clear || true
-            docker-compose -p results-staging exec -T app php artisan view:clear || true
+            docker-compose -p business-staging exec -T app php artisan key:generate --force || true
+            docker-compose -p business-staging exec -T app php artisan storage:link || true
+            docker-compose -p business-staging exec -T app php artisan migrate --force || true
+            docker-compose -p business-staging exec -T app php artisan config:clear || true
+            docker-compose -p business-staging exec -T app php artisan cache:clear || true
+            docker-compose -p business-staging exec -T app php artisan view:clear || true
           ENDSSH
 
   deploy-production:
@@ -191,7 +191,7 @@ jobs:
             set -e
             cd "$DEPLOY_PATH"
 
-            git fetch https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cranecloud.io/${CI_PROJECT_PATH}.git main:remotes/origin/main || true
+            git fetch fetch "${GITHUB_REPOSITORY_URL}" main:remotes/origin/main || true
             git checkout main || true
             git reset --hard origin/main || true
 
@@ -200,24 +200,24 @@ jobs:
             export ENVIRONMENT=production
             export APP_PORT=${PRODUCTION_APP_PORT}
             export DB_PORT=5447
-            export POSTGRES_USER=laravel_production
-            export POSTGRES_PASSWORD=laravel_production
-            export POSTGRES_DB=results_production
+            export MYSQL_USER=laravel_production
+            export MYSQL_PASSWORD=laravel_production
+            export MYSQL_DB=business_production
 
             echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-            docker pull ${DOCKER_USERNAME}/results-management:latest || true
+            docker pull ${DOCKER_USERNAME}/business-poss:latest || true
 
-            docker stop results-app-production results-db-production results-production_app_1 results-production_db_1 results-management-app results-management-db 2>/dev/null || true
-            docker rm results-app-production results-db-production results-production_app_1 results-production_db_1 results-management-app results-management-db 2>/dev/null || true
+            docker stop businnes-poss-production business-db-production business-production_app_1 business-production_db_1 business-poss-app business-poss-db 2>/dev/null || true
+            docker rm businnes-poss-production business-db-production business-production_app_1 business-production_db_1 business-poss-app business-poss-db 2>/dev/null || true
 
-            docker-compose -p results-production up -d
+            docker-compose -p business-production up -d
 
             sleep 20
 
-            docker-compose -p results-production exec -T app php artisan key:generate --force || true
-            docker-compose -p results-production exec -T app php artisan storage:link || true
-            docker-compose -p results-production exec -T app php artisan migrate --force || true
-            docker-compose -p results-production exec -T app php artisan config:clear || true
-            docker-compose -p results-production exec -T app php artisan cache:clear || true
-            docker-compose -p results-production exec -T app php artisan view:clear || true
+            docker-compose -p business-production exec -T app php artisan key:generate --force || true
+            docker-compose -p business-production exec -T app php artisan storage:link || true
+            docker-compose -p business-production exec -T app php artisan migrate --force || true
+            docker-compose -p business-production exec -T app php artisan config:clear || true
+            docker-compose -p business-production exec -T app php artisan cache:clear || true
+            docker-compose -p business-production exec -T app php artisan view:clear || true
           ENDSSH
